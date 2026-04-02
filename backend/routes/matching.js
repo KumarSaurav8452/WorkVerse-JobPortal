@@ -1,5 +1,5 @@
 /**
- * GraphHire — Matching Engine Routes (Phase 3)
+ * WorkVerse — Matching Engine Routes (Phase 3)
  * All powered by Cypher graph traversal on Neo4j AuraDB dd7f574a
  */
 const router = require('express').Router();

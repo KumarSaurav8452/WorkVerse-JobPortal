@@ -1,4 +1,4 @@
-// GraphHire — Neo4j Schema Setup (Cypher)
+// WorkVerse — Neo4j Schema Setup (Cypher)
 // Run this against your AuraDB instance b63e5150
 // URI: neo4j+s://b63e5150.databases.neo4j.io
 

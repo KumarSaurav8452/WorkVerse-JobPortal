@@ -1,14 +1,23 @@
 {
-  "name": "backend",
+  "name": "workverse-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "seed": "node scripts/seed.js",
+    "check:jobs": "node scripts/check_jobs.js",
+    "check:users": "node scripts/check_users.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "express",
+    "neo4j",
+    "api",
+    "job-portal"
+  ],
+  "author": "Kumar Saurav",
   "license": "ISC",
-  "description": "",
+  "description": "Express and Neo4j backend for the WorkVerse job portal.",
   "dependencies": {
     "@faker-js/faker": "^10.3.0",
     "bcryptjs": "^3.0.3",

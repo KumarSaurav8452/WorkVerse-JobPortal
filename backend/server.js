@@ -120,7 +120,7 @@ app.use((err, req, res, next) => {
 const start = async () => {
   await verifyConnectivity();
   app.listen(PORT, () => {
-    console.log(`🚀 GraphHire API running on http://localhost:${PORT}`);
+    console.log(`🚀 WorkVerse API running on http://localhost:${PORT}`);
   });
 };
 

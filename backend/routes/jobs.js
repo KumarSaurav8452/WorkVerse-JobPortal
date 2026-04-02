@@ -1,5 +1,5 @@
 /**
- * GraphHire — Jobs Routes
+ * WorkVerse — Jobs Routes
  */
 const router = require('express').Router();
 const { v4: uuidv4 } = require('uuid');

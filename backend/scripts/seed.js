@@ -1,5 +1,5 @@
 /**
- * GraphHire — Seed Script
+ * WorkVerse — Seed Script
  * Seeds 50 candidates, 20 jobs, 30 skills, 10 companies into Neo4j AuraDB dd7f574a
  * Run: node scripts/seed.js
  */
@@ -81,7 +81,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 async function seed() {
   const session = driver.session({ database: 'neo4j' });
-  console.log('🌱 Starting GraphHire seed — Neo4j AuraDB dd7f574a...\n');
+  console.log('🌱 Starting WorkVerse seed — Neo4j AuraDB dd7f574a...\n');
 
   try {
     // 1. Create Skills
@@ -256,7 +256,7 @@ async function seed() {
       }
     }
     console.log('✅ 20 Jobs seeded with required skills\n');
-    console.log('🎉 GraphHire seed complete! Database: Neo4j AuraDB dd7f574a');
+    console.log('🎉 WorkVerse seed complete! Database: Neo4j AuraDB dd7f574a');
     console.log('   → 30 Skills | 10 Companies | 50 Candidates | 20 Jobs');
     console.log('   → All stored as graph nodes + relationships in Neo4j');
   } catch (err) {

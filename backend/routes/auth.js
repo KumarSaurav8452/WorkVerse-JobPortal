@@ -1,5 +1,5 @@
 /**
- * GraphHire — Auth Routes
+ * WorkVerse — Auth Routes
  * POST /api/auth/register
  * POST /api/auth/login
  */

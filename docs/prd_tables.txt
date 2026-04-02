@@ -1,10 +1,10 @@
 --- TABLE ---
-🔷 GraphHire
+🔷 WorkVerse
 Neo4j-Powered Intelligent Job Portal
 Product Requirements Document  |  v1.0  |  March 2026
 
 --- TABLE ---
-Document Owner | Product Team — GraphHire
+Document Owner | Product Team — WorkVerse
 Status | DRAFT — For Vibe Coding Sprint
 Tech Stack | Neo4j (Graph DB), Node.js / Python Backend, React Frontend
 Target Launch | Q3 2026
@@ -166,7 +166,7 @@ LIMIT 20;
 
 --- TABLE ---
 What is Vibe Coding?
-Vibe Coding means iterating quickly with AI-assisted development — writing prompts to generate features, then refining the output. This section provides the exact prompts, patterns, and architecture decisions to make vibe coding GraphHire as smooth as possible.
+Vibe Coding means iterating quickly with AI-assisted development — writing prompts to generate features, then refining the output. This section provides the exact prompts, patterns, and architecture decisions to make vibe coding WorkVerse as smooth as possible.
 
 --- TABLE ---
 Layer | Tech | Why

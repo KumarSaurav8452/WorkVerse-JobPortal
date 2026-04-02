@@ -1,12 +1,23 @@
 {
-  "name": "ngd-project",
+  "name": "workverse-jobportal",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "seed": "npm --prefix backend run seed"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "job-portal",
+    "neo4j",
+    "react",
+    "express",
+    "graph-database"
+  ],
+  "author": "Kumar Saurav",
   "license": "ISC",
-  "description": ""
+  "description": "WorkVerse is a full-stack job portal that uses React, Express, and Neo4j to connect candidates, employers, jobs, and skills through a graph-powered hiring workflow."
 }

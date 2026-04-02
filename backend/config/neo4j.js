@@ -20,7 +20,7 @@ const verifyConnectivity = async () => {
     await driver.verifyConnectivity();
     console.log('✅ Neo4j AuraDB connected: dd7f574a.databases.neo4j.io');
     const session = getSession();
-    const result = await session.run('RETURN "GraphHire DB Ready" AS msg');
+    const result = await session.run('RETURN "WorkVerse DB Ready" AS msg');
     console.log('📊 DB message:', result.records[0].get('msg'));
     await session.close();
   } catch (err) {

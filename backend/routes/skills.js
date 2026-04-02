@@ -1,5 +1,5 @@
 /**
- * GraphHire — Skills Routes
+ * WorkVerse — Skills Routes
  */
 const router = require('express').Router();
 const { getSession } = require('../config/neo4j');
