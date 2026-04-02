@@ -98,19 +98,20 @@ router.get('/:id', maybeAuth, async (req, res) => {
 
 // POST /api/jobs — create job (employer only)
 router.post('/', auth, async (req, res) => {
-  const { title, description, salaryMin, salaryMax, remote = false, location, experienceYears = 0, employmentType = 'full-time', benefits, skills = [], companyId } = req.body;
+  const { title, description, salaryMin, salaryMax, remote = false, location, experienceYears = 0, employmentType = 'full-time', benefits = [], skills = [], companyId } = req.body;
   if (!title || !description) return res.status(400).json({ error: 'title and description required' });
 
   const session = getSession();
   const jobId = uuidv4();
   try {
-    const targetCompanyId = companyId || req.user.companyId;
+    const targetCompanyId = companyId || req.user.companyId || null;
     console.log("📝 CREATING JOB FOR EMPLOYER:", { title, employerId: req.user.id, targetCompanyId });
     
     // Create job node and link to BOTH company and employer for visibility safety
     const result = await session.run(
-      `MATCH (e:Employer) WHERE (e.employerId = $employerId OR e.id = $employerId)
-       MATCH (co:Company { companyId: $companyId })
+      `MATCH (e:Employer)-[:WORKS_FOR]->(co:Company)
+       WHERE (e.employerId = $employerId OR e.id = $employerId)
+         AND ($companyId IS NULL OR co.companyId = $companyId)
        CREATE (j:Job {
          jobId: $jobId, title: $title, description: $description,
          salaryMin: $salaryMin, salaryMax: $salaryMax,
@@ -123,6 +124,10 @@ router.post('/', auth, async (req, res) => {
        RETURN j.jobId`,
       { employerId: req.user.id, jobId, title, description, salaryMin, salaryMax, remote, location, experienceYears, employmentType, benefits, companyId: targetCompanyId, now: new Date().toISOString() }
     );
+
+    if (!result.records.length) {
+      return res.status(400).json({ error: 'Employer is not linked to a valid company' });
+    }
 
     // Link required skills
     for (const skill of skills) {

@@ -6,6 +6,44 @@ const { v4: uuidv4 } = require('uuid');
 const { getSession } = require('../config/neo4j');
 const { auth } = require('../middleware/auth');
 
+const recalculateCandidateScore = async (session, candidateId) => {
+  const result = await session.run(
+    `MATCH (c:Candidate { candidateId: $id })
+     OPTIONAL MATCH (c)-[:HAS_SKILL]->(s:Skill)
+     WITH c, count(DISTINCT s) AS skillCount
+     OPTIONAL MATCH (c)-[:HAS_EXPERIENCE]->(e:Experience)
+     WITH c, skillCount, count(DISTINCT e) AS experienceCount
+     OPTIONAL MATCH (c)-[:HAS_EDUCATION]->(ed:Education)
+     WITH c, skillCount, experienceCount, count(DISTINCT ed) AS educationCount
+     WITH c,
+          (CASE WHEN trim(coalesce(c.name, '')) <> '' THEN 10 ELSE 0 END) +
+          (CASE WHEN trim(coalesce(c.title, '')) <> '' THEN 15 ELSE 0 END) +
+          (CASE WHEN trim(coalesce(c.bio, '')) <> '' THEN 15 ELSE 0 END) +
+          (CASE WHEN trim(coalesce(c.location, '')) <> '' THEN 10 ELSE 0 END) +
+          (CASE WHEN trim(coalesce(c.phone, '')) <> '' THEN 5 ELSE 0 END) +
+          (CASE WHEN trim(coalesce(c.photoUrl, '')) <> '' THEN 8 ELSE 0 END) +
+          (CASE WHEN trim(coalesce(c.resumeUrl, '')) <> '' THEN 12 ELSE 0 END) +
+          (CASE WHEN trim(coalesce(c.githubUrl, '')) <> '' THEN 5 ELSE 0 END) +
+          (CASE WHEN trim(coalesce(c.linkedInUrl, '')) <> '' THEN 5 ELSE 0 END) +
+          (CASE WHEN c.isLooking = true THEN 5 ELSE 0 END) +
+          (CASE
+            WHEN skillCount >= 5 THEN 10
+            WHEN skillCount > 0 THEN skillCount * 2
+            ELSE 0
+          END) +
+          (CASE
+            WHEN experienceCount >= 2 THEN 10
+            WHEN experienceCount = 1 THEN 6
+            ELSE 0
+          END) +
+          (CASE WHEN educationCount > 0 THEN 5 ELSE 0 END) AS rawScore
+     SET c.profileScore = CASE WHEN rawScore > 100 THEN 100 ELSE rawScore END
+     RETURN c.profileScore AS profileScore`,
+    { id: candidateId }
+  );
+  return result.records[0]?.get('profileScore') || 0;
+};
+
 // GET /api/candidates — list with pagination
 router.get('/', async (req, res) => {
   const { skip = 0, limit = 20, isLooking } = req.query;
@@ -31,6 +69,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const session = getSession();
   try {
+    await recalculateCandidateScore(session, req.params.id);
     const result = await session.run(
       `MATCH (c:Candidate { candidateId: $id })
        OPTIONAL MATCH (c)-[hs:HAS_SKILL]->(s:Skill)
@@ -92,6 +131,7 @@ router.put('/:id', auth, async (req, res) => {
       console.warn("⚠️ CANDIDATE NOT FOUND:", req.params.id);
       return res.status(404).json({ error: 'Not found' });
     }
+    await recalculateCandidateScore(session, req.params.id);
     console.log("✅ UPDATE SUCCESS");
     res.json(result.records[0].get('candidate'));
   } catch (err) { 
@@ -119,6 +159,7 @@ router.post('/:id/skills', auth, async (req, res) => {
        RETURN s.name AS skill, r.proficiency AS proficiency`,
       { id: req.params.id, skillName, skillId: uuidv4(), category, proficiency, yearsExp }
     );
+    await recalculateCandidateScore(session, req.params.id);
     res.status(201).json({ message: `Skill "${skillName}" added` });
   } catch (err) { res.status(500).json({ error: err.message }); }
   finally { await session.close(); }
@@ -157,6 +198,7 @@ router.post('/:id/experience', auth, async (req, res) => {
        RETURN e`,
       { id: req.params.id, company, title, industry: industry || 'Tech', startDate: startDate || '', endDate: endDate || '', isCurrent: !!isCurrent, description: description || '' }
     );
+    await recalculateCandidateScore(session, req.params.id);
     res.status(201).json({ message: 'Experience added' });
   } catch (err) { res.status(500).json({ error: err.message }); }
   finally { await session.close(); }

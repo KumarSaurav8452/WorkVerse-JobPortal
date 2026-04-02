@@ -13,7 +13,8 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     try {
       const res = await api.post('/auth/register', form);
       localStorage.setItem('gh_token', res.data.token);
@@ -21,71 +22,109 @@ export default function RegisterPage() {
       navigate(res.data.user.role === 'employer' ? '/dashboard' : '/profile');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg-primary)', paddingTop: 60, paddingBottom: 60,
-    }}>
-      <div className="card" style={{ width: '100%', maxWidth: 460, padding: 40 }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h1 style={{ fontSize: 24, marginBottom: 8 }}>Join GraphHire</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Create your Neo4j-powered talent profile</p>
+    <div className="auth-shell">
+      <div className="auth-grid">
+        <div className="auth-showcase">
+          <div className="section-stack">
+            <div className="eyebrow">Build your entry point</div>
+            <div>
+              <h1 style={{ fontSize: 'clamp(2.4rem, 6vw, 4.2rem)', lineHeight: 1.02, marginBottom: 18 }}>
+                Join the network that
+                <br />
+                <span className="gradient-text">connects work to possibility.</span>
+              </h1>
+              <p style={{ color: 'var(--text-secondary)', maxWidth: 520 }}>
+                Create your WorkVerse account to map skills, discover opportunities, and power a sharper hiring experience.
+              </p>
+            </div>
+          </div>
+
+          <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+            <div className="metric-card">
+              <span className="metric-value gradient-text">1 graph</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Jobs, skills, and people in one place</span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-value gradient-text">2 roles</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Built for candidates and employers</span>
+            </div>
+          </div>
         </div>
 
-        {/* Role Toggle */}
-        <div style={{ display: 'flex', background: 'var(--bg-elevated)', borderRadius: 12, padding: 4, marginBottom: 24 }}>
-          {['candidate', 'employer'].map(role => (
-            <button key={role}
-              type="button"
-              onClick={() => setForm(f => ({ ...f, role }))}
-              style={{
-                flex: 1, padding: '10px 0', border: 'none', borderRadius: 8, cursor: 'pointer',
-                background: form.role === role ? 'var(--bg-card)' : 'transparent',
-                color: form.role === role ? 'var(--text-primary)' : 'var(--text-muted)',
-                fontWeight: form.role === role ? 600 : 400,
-                boxShadow: form.role === role ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
-                transition: 'all 0.2s', textTransform: 'capitalize',
-              }}>
-              I'm a {role}
-            </button>
-          ))}
-        </div>
-
-        {error && <div style={{ background: 'rgba(255,94,122,0.1)', color: 'var(--danger)', padding: 12, borderRadius: 8, fontSize: 13, marginBottom: 20, textAlign: 'center' }}>{error}</div>}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="form-group">
-            <label className="form-label">Full Name</label>
-            <input required className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Alex Developer" />
+        <div className="auth-card">
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 32, marginBottom: 8 }}>Create your WorkVerse account</h2>
+            <p style={{ color: 'var(--text-secondary)' }}>Set up your workspace and start building momentum.</p>
           </div>
-          <div className="form-group">
-            <label className="form-label">Work Email</label>
-            <input type="email" required className="form-input" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="alex@example.com" />
+
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: 999, padding: 5, marginBottom: 20 }}>
+            {['candidate', 'employer'].map((role) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, role }))}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  borderRadius: 999,
+                  padding: '11px 14px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  textTransform: 'capitalize',
+                  color: form.role === role ? '#07111f' : 'var(--text-secondary)',
+                  background: form.role === role ? 'var(--gradient)' : 'transparent',
+                  transition: 'var(--transition)',
+                }}
+              >
+                {role}
+              </button>
+            ))}
           </div>
-          {form.role === 'employer' && (
-            <div className="form-group">
-              <label className="form-label">Company Name</label>
-              <input required className="form-input" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} placeholder="Acme Inc." />
+
+          {error && (
+            <div style={{ background: 'rgba(255,104,136,0.12)', color: 'var(--danger)', padding: 14, borderRadius: 16, marginBottom: 18 }}>
+              {error}
             </div>
           )}
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input type="password" required className="form-input" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="••••••••" minLength={6} />
-          </div>
 
-          <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ justifyContent: 'center', marginTop: 10 }}>
-            {loading ? 'Creating Account...' : 'Create Account'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <input required className="form-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Alex Developer" />
+            </div>
 
-        <p style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: 'var(--text-muted)' }}>
-          By joining, your profile is stored in Neo4j AuraDB instance dd7f574a.
-          <br /><br />
-          Already have an account? <Link to="/login" style={{ color: 'var(--accent)' }}>Sign in</Link>
-        </p>
+            <div className="form-group">
+              <label className="form-label">Work Email</label>
+              <input type="email" required className="form-input" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="alex@example.com" />
+            </div>
+
+            {form.role === 'employer' && (
+              <div className="form-group">
+                <label className="form-label">Company Name</label>
+                <input required className="form-input" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Acme Inc." />
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input type="password" required className="form-input" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Choose a secure password" minLength={6} />
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-lg" disabled={loading} style={{ justifyContent: 'center', marginTop: 8 }}>
+              {loading ? 'Creating account...' : 'Create Account'}
+            </button>
+          </form>
+
+          <p style={{ marginTop: 20, color: 'var(--text-secondary)', fontSize: 14 }}>
+            Already a member? <Link to="/login" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

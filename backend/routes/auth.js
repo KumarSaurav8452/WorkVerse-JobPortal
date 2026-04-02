@@ -110,6 +110,8 @@ router.post('/register', async (req, res) => {
         RETURN u, co
       `;
       await session.run(query, { id, name, cleanEmail, hashed, company: company || 'Unknown Company', companyId });
+      const token = signToken({ id, email: cleanEmail, role, companyId });
+      return res.status(201).json({ token, user: { id, name, email: cleanEmail, role, companyId } });
     } else {
       const query = `
         CREATE (c:Candidate {
@@ -119,7 +121,7 @@ router.post('/register', async (req, res) => {
           password: $hashed,
           role: 'candidate',
           isLooking: true,
-          profileScore: 20,
+          profileScore: 15,
           consentGiven: true,
           consentDate: datetime(),
           createdAt: datetime()
@@ -127,10 +129,9 @@ router.post('/register', async (req, res) => {
         RETURN c
       `;
       await session.run(query, { id, name, cleanEmail, hashed });
+      const token = signToken({ id, email: cleanEmail, role });
+      return res.status(201).json({ token, user: { id, name, email: cleanEmail, role } });
     }
-
-    const token = signToken({ id, email: cleanEmail, role });
-    res.status(201).json({ token, user: { id, name, email: cleanEmail, role } });
   } catch (err) {
     if (err.message.includes('already exists') || err.code === 'Neo.ClientError.Schema.ConstraintValidationFailed') {
       return res.status(409).json({ error: 'Email already registered' });
@@ -163,7 +164,7 @@ router.post('/login', async (req, res) => {
     if (!record) {
       result = await session.run(
         `MATCH (e:Employer) WHERE toLower(e.email) = $cleanEmail
-         RETURN e.employerId AS id, e.name AS name, e.password AS pass, e.role AS role`,
+         RETURN e.employerId AS id, e.name AS name, e.password AS pass, e.role AS role, e.companyId AS companyId`,
         { cleanEmail }
       );
       record = result.records[0];
@@ -178,8 +179,9 @@ router.post('/login', async (req, res) => {
     const id = record.get('id');
     const name = record.get('name');
     const role = record.get('role');
-    const token = signToken({ id, email: cleanEmail, role });
-    res.json({ token, user: { id, name, email: cleanEmail, role } });
+    const companyId = role === 'employer' ? record.get('companyId') : undefined;
+    const token = signToken(companyId ? { id, email: cleanEmail, role, companyId } : { id, email: cleanEmail, role });
+    res.json({ token, user: companyId ? { id, name, email: cleanEmail, role, companyId } : { id, name, email: cleanEmail, role } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });

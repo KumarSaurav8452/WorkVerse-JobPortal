@@ -7,6 +7,7 @@ export default function CandidateProfile() {
   const [skills, setSkills] = useState([]);
   const [experience, setExperience] = useState([]);
   const [education, setEducation] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +28,10 @@ export default function CandidateProfile() {
 
     api.get(`/matching/candidates/${user.id}/jobs`).then(res => {
       setRecommendedJobs(res.data || []);
+    }).catch(console.error);
+
+    api.get(`/candidates/${user.id}/applications`).then(res => {
+      setApplications(res.data || []);
     }).catch(console.error);
   };
 
@@ -231,6 +236,54 @@ export default function CandidateProfile() {
 
         {/* RIGHT COLUMN: Recommended Jobs */}
         <div>
+          <div className="card" style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 18, marginBottom: 4 }}>Application Tracker</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 18 }}>
+              Follow the live stage of each job application in your pipeline.
+            </p>
+            {applications.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {applications.map((application) => {
+                  const statusClass = {
+                    applied: 'badge-blue',
+                    screening: 'badge-orange',
+                    interview: 'badge-purple',
+                    offer: 'badge-green',
+                    hired: 'badge-green',
+                    rejected: 'badge-red',
+                  }[application.status] || 'badge-blue';
+
+                  return (
+                    <Link
+                      key={application.appId}
+                      to={`/jobs/${application.job?.jobId}`}
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                      <div className="metric-card" style={{ padding: 16 }}>
+                        <div className="flex-between" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+                          <strong>{application.job?.title || 'Job'}</strong>
+                          <span className={`badge ${statusClass}`} style={{ textTransform: 'capitalize' }}>
+                            {application.status || 'applied'}
+                          </span>
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 6 }}>
+                          {application.company || 'Company'} · Applied {application.appliedAt ? new Date(application.appliedAt).toLocaleDateString() : 'recently'}
+                        </div>
+                        {application.coverLetter && (
+                          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                            Cover letter submitted
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p style={{ color: 'var(--text-muted)' }}>You have not applied to any jobs yet.</p>
+            )}
+          </div>
+
           <div className="card">
             <h2 style={{ fontSize: 18, marginBottom: 4 }}>Graph Matched Jobs</h2>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>Recommended precisely for your skills</p>
@@ -263,12 +316,12 @@ export default function CandidateProfile() {
       {/* MODALS */}
       {showEdit && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div className="card" style={{ width: '100%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="card modal-card">
             <h2 style={{ marginBottom: 20 }}>Edit Profile</h2>
             <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <input name="name" defaultValue={profile.name} className="form-input" placeholder="Full Name" required style={{ flex: 1 }} />
-                <input name="title" defaultValue={profile.title} className="form-input" placeholder="Job Title" style={{ flex: 1 }} />
+              <div className="modal-row">
+                <input name="name" defaultValue={profile.name} className="form-input" placeholder="Full Name" required />
+                <input name="title" defaultValue={profile.title} className="form-input" placeholder="Job Title" />
               </div>
               <input name="location" defaultValue={profile.location} className="form-input" placeholder="Location (e.g., San Francisco, CA)" />
               <input type="hidden" name="phone" defaultValue={profile.phone || ''} />
@@ -281,9 +334,9 @@ export default function CandidateProfile() {
                   <input name="photoFile" type="file" accept="image/*" className="form-input" style={{ padding: '8px' }} />
                 </div>
                 <input name="resumeUrl" defaultValue={profile.resumeUrl} className="form-input" placeholder="Resume Link (Google Drive, Dropbox, etc.)" style={{ marginBottom: 12 }} />
-                <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
-                  <input name="githubUrl" defaultValue={profile.githubUrl} className="form-input" placeholder="GitHub URL" style={{ flex: 1 }} />
-                  <input name="linkedInUrl" defaultValue={profile.linkedInUrl} className="form-input" placeholder="LinkedIn URL" style={{ flex: 1 }} />
+                <div className="modal-row" style={{ marginBottom: 12 }}>
+                  <input name="githubUrl" defaultValue={profile.githubUrl} className="form-input" placeholder="GitHub URL" />
+                  <input name="linkedInUrl" defaultValue={profile.linkedInUrl} className="form-input" placeholder="LinkedIn URL" />
                 </div>
               </div>
 
@@ -291,9 +344,9 @@ export default function CandidateProfile() {
                 <option value="true">🟢 Actively Looking for Jobs</option>
                 <option value="false">⚪ Not Looking</option>
               </select>
-              <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-                <button type="button" onClick={() => setShowEdit(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save Profile</button>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowEdit(false)} className="btn btn-ghost">Cancel</button>
+                <button type="submit" className="btn btn-primary">Save Profile</button>
               </div>
             </form>
           </div>

@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import JobsPage from './pages/JobsPage';
 import JobDetailPage from './pages/JobDetailPage';
 import CandidateProfile from './pages/CandidateProfile';
+import EmployerCandidateView from './pages/EmployerCandidateView';
 import EmployerDashboard from './pages/EmployerDashboard';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -30,6 +31,9 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={
           <PrivateRoute><CandidateProfile /></PrivateRoute>
+        } />
+        <Route path="/candidates/:id/view" element={
+          <PrivateRoute role="employer"><EmployerCandidateView /></PrivateRoute>
         } />
         <Route path="/dashboard" element={
           <PrivateRoute role="employer"><EmployerDashboard /></PrivateRoute>
