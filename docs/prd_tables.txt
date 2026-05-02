@@ -1,0 +1,214 @@
+--- TABLE ---
+🔷 WorkVerse
+Neo4j-Powered Intelligent Job Portal
+Product Requirements Document  |  v1.0  |  March 2026
+
+--- TABLE ---
+Document Owner | Product Team — WorkVerse
+Status | DRAFT — For Vibe Coding Sprint
+Tech Stack | Neo4j (Graph DB), Node.js / Python Backend, React Frontend
+Target Launch | Q3 2026
+
+--- TABLE ---
+Vision Statement
+To be the world's first hiring platform where relationships between people, skills, and opportunities are the core product — not a side feature.
+
+--- TABLE ---
+Metric | Year 1 Target | Year 2 Target
+Match Accuracy (Hiring Manager Rating) | 72% | 88%
+Time-to-Hire Reduction | 20% | 40%
+Candidate Engagement Rate | 35% | 55%
+Graph Query Response Time | < 200ms | < 100ms
+
+--- TABLE ---
+Node Label | Key Properties | Description
+:Candidate | candidateId, name, email, phone, location, profileScore | A job seeker with full profile, resume, and preferences
+:Job | jobId, title, description, salaryMin, salaryMax, remote, status | A job posting created by an employer
+:Skill | skillId, name, category, level (beginner/mid/expert) | Normalised skill node — shared across all candidates
+:Company | companyId, name, industry, size, website, verifiedAt | Employer entity — one node, many jobs
+:Experience | expId, title, startDate, endDate, isCurrent, description | Work history node linked to Candidate + Company
+:Education | eduId, degree, field, startYear, endYear, gpa | Academic background node linked to University
+:University | uniId, name, ranking, country | Normalised university node
+:Endorsement | endorseId, createdAt, note | Peer skill endorsement — links two Candidates via Skill
+:Application | appId, appliedAt, status, coverLetter, source | Tracks a Candidate's application to a Job
+:Assessment | assId, type, score, takenAt, validUntil | Skill test result linked to Candidate + Skill
+:Location | locId, city, state, country, lat, lng | Normalised location — shared across nodes
+
+--- TABLE ---
+Relationship | Direction | Key Properties
+(Candidate)-[:HAS_SKILL]->(Skill) | Candidate → Skill | yearsExp, proficiency (1-10), lastUsed
+(Candidate)-[:WORKED_AT]->(Company) | Candidate → Company | via Experience node
+(Candidate)-[:APPLIED_TO]->(Job) | Candidate → Job | via Application node
+(Candidate)-[:ENDORSES {via}]->(Skill) | Candidate → Skill (endorsed) | endorsedBy, note, createdAt
+(Candidate)-[:REFERRED_BY]->(Candidate) | Candidate → Candidate | referralDate, jobId, bonus
+(Candidate)-[:CONNECTED_TO]->(Candidate) | Bidirectional | connectedAt, source
+(Job)-[:REQUIRES_SKILL]->(Skill) | Job → Skill | mandatory (bool), minProficiency
+(Job)-[:POSTED_BY]->(Company) | Job → Company | postedAt, hiringManagerId
+(Candidate)-[:SAVED_JOB]->(Job) | Candidate → Job | savedAt, notifyOnChange
+(Candidate)-[:TOOK_ASSESSMENT]->(Assessment) | Candidate → Assessment | score, completedAt
+(Skill)-[:RELATED_TO]->(Skill) | Skill ↔ Skill | weight (0-1), type (prerequisite/adjacent)
+
+--- TABLE ---
+Feature | Description | Neo4j Benefit
+CandidateId System | UUID-based unique identifier for each candidate. Enables cross-platform identity resolution and referral tracking. | Single node lookup O(1) via index
+Skill Graph | Skills are shared nodes. Adding React links the candidate to an existing :Skill node — no duplication. | One skill node, thousands of HAS_SKILL edges
+Experience Timeline | Each role is a node connected to both Candidate and Company. Supports gap detection and tenure analysis. | Traverse full career path in one query
+Proficiency Scoring | Each HAS_SKILL relationship stores yearsExp and proficiency (1–10), updated via assessments. | Relationship properties — no extra tables
+Profile Completeness Score | Computed graph metric based on node count and relationship density. Shown as progress bar. | Degree centrality calculation
+Career DNA | Auto-generated career fingerprint using shortest-path analysis between roles. | Graph pattern matching via Cypher
+
+--- TABLE ---
+Feature | Description | Neo4j Benefit
+JobId System | UUID per job. Jobs link to Company, required Skills, and Location nodes. | Shared nodes prevent data drift
+Skill Requirements Graph | Jobs declare REQUIRES_SKILL edges with mandatory flag and minProficiency threshold. | Filter candidates in graph traversal
+Smart Job Expiry | Jobs auto-expire after configurable days; archived jobs remain queryable for analytics. | Date properties on Job nodes
+Job Similarity Engine | Find similar jobs by traversing shared Skill nodes — 'jobs like this one'. | Common-neighbor Cypher query
+Salary Range Bands | Structured salary data enables range overlap matching between candidate expectations and job offers. | Numeric comparison on node properties
+Multi-location Jobs | One job can link to multiple :Location nodes for hybrid or multi-office roles. | One-to-many relationship traversal
+
+--- TABLE ---
+Feature | Description | Neo4j Benefit
+Skill Match Score | Computes % of required skills the candidate possesses, weighted by proficiency. | Aggregate over HAS_SKILL edges
+Experience Match | Compares candidate's total relevant years against job requirements using Experience nodes. | SUM over relationship properties
+Adjacent Skill Bonus | Candidates lacking Skill A but having skill B (where B-[:RELATED_TO]->A) get partial credit. | 2-hop traversal on Skill graph
+Career Trajectory Fit | Compares candidate's career path pattern to historical successful-hire patterns. | Subgraph isomorphism via APOC
+Culture Fit Score | Based on shared former colleagues and company types in candidate's network. | Common-neighbor analysis
+Availability Filter | Only surfaces candidates who are actively looking (isLooking: true on Candidate node). | Node property filter
+
+--- TABLE ---
+Feature | Description | Neo4j Benefit
+Job Recommendations | For each candidate, traverse their skill/experience graph to surface best-fit jobs. | MATCH path, RETURN ordered by score
+Candidate Recommendations | For each job, return top N candidates ranked by graph-computed match score. | Reverse traversal from Job node
+'People Also Applied' Feature | Show jobs that other similar candidates (shared skills) applied to. | Collaborative filtering via graph
+Skill Gap Analysis | Given a target job, show exactly which skills the candidate is missing with learning paths. | SET difference on skill subgraphs
+Referral Suggestions | Suggest 'Ask X to refer you' based on candidate's connection graph and company overlap. | Multi-hop traversal: Candidate→Connected→Company
+Trending Skills | Surface skills most commonly added to jobs in the last 30 days. | Aggregation on REQUIRES_SKILL timestamps
+
+--- TABLE ---
+Feature | Description | Neo4j Benefit
+Peer Endorsements | Candidates endorse each other's skills via :ENDORSES relationship with optional note. | Direct relationship between Candidate nodes
+Assessment Integration | Built-in or third-party skill tests create :Assessment nodes with scores. | Assessment node linked to Skill + Candidate
+LinkedIn Import | Parse LinkedIn exports to auto-create Experience + Education + Skill nodes. | Bulk graph insertion via APOC
+Endorsement Fraud Detection | Detect circular endorsement rings (A endorses B, B endorses A, no shared history). | Cycle detection in Cypher
+Verified Badge System | Skills with 3+ endorsements + passing assessment get a verified badge. | Graph rule: endorsement count + score check
+Skill Decay Model | Skills not used in 3 years reduce in relevance score automatically. | Date arithmetic on HAS_SKILL.lastUsed
+
+--- TABLE ---
+Feature | Description | Neo4j Benefit
+Talent Pool Map | Visual graph of candidates in a geography clustered by skill sets. | Geographic + degree clustering
+Hiring Funnel Analytics | Track Application status transitions as graph path analytics. | State machine on Application nodes
+Skill Demand Heatmap | Which skills appear most in active jobs vs supply from candidate pool. | Bipartite graph analysis
+Referral Network Graph | Visualise who referred whom; identify super-connectors. | PageRank on REFERRED_BY graph
+Time-to-Fill Prediction | ML model trained on graph features to predict how quickly a role will be filled. | Graph embeddings as ML features
+Competitor Talent Flow | Track which companies candidates previously worked at (anonymised). | Aggregate on WORKED_AT edges
+
+--- TABLE ---
+Feature | Description | Neo4j Benefit
+Talent Pools | Employers save shortlisted candidates to named pools (subgraphs). | Named sets of Candidate nodes
+Pipeline Kanban | Drag-and-drop hiring pipeline with status tracked on Application nodes. | Application.status property updates
+Collaborative Hiring | Multiple team members can add interview notes linked to Application nodes. | Note nodes attached to Application
+Outbound Sourcing | Search candidates not actively looking via graph traversal of passive profiles. | Filter isLooking: false with skills match
+Diversity Analytics | Anonymised demographic diversity metrics on talent pipeline. | Aggregation on Candidate attributes
+Job Boost / Promotion | Featured jobs get higher ranking via boostedUntil property on Job node. | Date-weighted ranking in Cypher
+
+--- TABLE ---
+// Indexes & Constraints Setup
+CREATE CONSTRAINT candidate_id ON (c:Candidate) ASSERT c.candidateId IS UNIQUE;
+CREATE CONSTRAINT job_id ON (j:Job) ASSERT j.jobId IS UNIQUE;
+CREATE CONSTRAINT skill_name ON (s:Skill) ASSERT s.name IS UNIQUE;
+CREATE INDEX candidate_location FOR (c:Candidate) ON (c.locationId);
+CREATE INDEX job_status FOR (j:Job) ON (j.status, j.postedAt);
+CREATE FULLTEXT INDEX skill_search FOR (n:Skill) ON EACH [n.name, n.category];
+
+--- TABLE ---
+// Candidate Matching Query
+MATCH (j:Job {jobId: $jobId})-[:REQUIRES_SKILL]->(s:Skill)
+WITH j, collect(s) AS required
+MATCH (c:Candidate)-[r:HAS_SKILL]->(s)
+WHERE s IN required AND c.isLooking = true
+WITH c, count(s) AS matched, size(required) AS total,
+     sum(r.proficiency) AS totalProf
+RETURN c.candidateId, c.name,
+       (matched * 1.0 / total) AS matchScore,
+       totalProf
+ORDER BY matchScore DESC, totalProf DESC
+LIMIT 20;
+
+--- TABLE ---
+// Skill Gap Analysis
+MATCH (j:Job {jobId: $jobId})-[:REQUIRES_SKILL]->(s:Skill)
+WHERE NOT (:Candidate {candidateId: $candidateId})-[:HAS_SKILL]->(s)
+OPTIONAL MATCH (s2:Skill)-[:RELATED_TO]->(s)
+WHERE (:Candidate {candidateId: $candidateId})-[:HAS_SKILL]->(s2)
+RETURN s.name AS missingSkill,
+       s.category AS category,
+       s2.name AS adjacentSkillYouHave;
+
+--- TABLE ---
+// Referral Path (Up to 3 Degrees)
+MATCH path = shortestPath(
+  (me:Candidate {candidateId: $myId})-[:CONNECTED_TO*1..3]-
+  (insider:Candidate)-[:WORKED_AT]->(c:Company {companyId: $targetCompanyId})
+)
+RETURN [n IN nodes(path) | n.name] AS connectionPath,
+       length(path) AS degrees
+ORDER BY degrees
+LIMIT 5;
+
+--- TABLE ---
+// Trending Skills (Last 30 Days)
+MATCH (j:Job)-[r:REQUIRES_SKILL]->(s:Skill)
+WHERE j.postedAt > datetime() - duration('P30D')
+  AND j.status = 'active'
+RETURN s.name, s.category, count(*) AS demand
+ORDER BY demand DESC
+LIMIT 20;
+
+--- TABLE ---
+What is Vibe Coding?
+Vibe Coding means iterating quickly with AI-assisted development — writing prompts to generate features, then refining the output. This section provides the exact prompts, patterns, and architecture decisions to make vibe coding WorkVerse as smooth as possible.
+
+--- TABLE ---
+Layer | Tech | Why
+Database | Neo4j AuraDB (free tier for dev) | Managed graph DB, instant Cypher access
+Backend | Node.js + Express or FastAPI (Python) | Great Neo4j driver support
+ORM / Query Builder | neogma (Node) or neomodel (Python) | Schema-first graph modelling
+Frontend | React + Vite + TailwindCSS | Fast iteration, rich UI component ecosystem
+Graph Viz | React-Force-Graph or Neovis.js | Native Neo4j visualisation in browser
+Auth | Auth0 / Clerk | Plug-and-play, JWT for API auth
+Search | Neo4j Fulltext Index + Algolia (optional) | Fulltext on top of graph for speed
+Hosting | Vercel (frontend) + Railway / Render (backend) | Zero-config deployment, git push to deploy
+Testing | Jest + Supertest + Neo4j Test Container | Graph-aware unit + integration tests
+
+--- TABLE ---
+Prompt: Neo4j Schema
+Create a Neo4j Cypher script that sets up all constraints and indexes for a job portal with Candidate, Job, Skill, Company, Experience, Education, Endorsement, and Application nodes. Include relationship types and example seed data.
+
+--- TABLE ---
+Prompt: Matching API
+Write a Node.js Express endpoint POST /api/jobs/:jobId/candidates that uses the Neo4j JavaScript driver to run a Cypher query matching candidates by skill overlap percentage and experience years, returning paginated results sorted by match score.
+
+--- TABLE ---
+Prompt: Skill Gap UI
+Build a React component SkillGapCard that receives a missingSkills array and adjacentSkills array as props and displays a visual skill gap analysis with progress bars for proficiency and a 'skills you already have that are close' section using TailwindCSS.
+
+--- TABLE ---
+Prompt: Graph Viz
+Create a React component using react-force-graph-2d that visualises a candidate's professional network from a Neo4j query result. Nodes should be colour-coded by type (Candidate = blue, Skill = green, Company = orange). On node click, show a sidebar with node details.
+
+--- TABLE ---
+Phase | Timeline | Deliverables
+MVP | Months 1–2 | Candidate profiles, job listings, basic skill matching, company pages, application tracking
+Beta | Months 3–4 | Smart matching engine, skill gap analysis, referral paths, employer dashboard, assessment integration
+v1.0 | Months 5–6 | Graph visualisation, GDS recommendations, analytics dashboard, mobile-responsive, API public beta
+v1.5 | Months 7–9 | AI cover letter generator, salary intelligence, talent pool manager, LinkedIn import, browser extension
+v2.0 | Months 10–12 | Marketplace for assessments, headhunter module, enterprise SSO, predictive hiring analytics, white-label option
+
+--- TABLE ---
+// .env Configuration
+NEO4J_URI=neo4j+s://<your-aura-instance>.databases.neo4j.io
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=<your-password>
+NEO4J_DATABASE=neo4j
+JWT_SECRET=<your-jwt-secret>
+REDIS_URL=redis://localhost:6379

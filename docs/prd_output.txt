@@ -1,0 +1,142 @@
+
+
+1. Executive Summary
+WorkVerse is a next-generation job portal that leverages Neo4j's property graph database to deliver relationship-aware hiring experiences that are impossible with traditional relational databases. Instead of matching candidates to jobs through simple keyword filters, WorkVerse understands the web of relationships between skills, experience, companies, roles, endorsements, and career trajectories — enabling smarter matches, better recommendations, and rich analytics for both candidates and employers.
+
+This PRD covers the full feature set, data model, Neo4j implementation strategy, API design, and vibe-coding guidelines for building WorkVerse from scratch.
+
+2. Problem Statement & Opportunity
+2.1 Current Pain Points
+Keyword-based matching misses highly qualified candidates who use different terminology
+No understanding of skill adjacency — a React developer is also likely proficient in JavaScript/TypeScript
+Career trajectory and growth potential are ignored — all experience is treated as equal
+Referral networks are invisible — existing portals do not map who referred whom or team overlaps
+Duplicate data — the same company, skill, or university is stored inconsistently across millions of rows
+
+2.2 Why Neo4j Solves This
+A graph database models the real-world relationships in hiring natively. Every candidate, skill, job, company, and endorsement becomes a node; connections between them become first-class relationships with properties. This unlocks:
+Multi-hop traversal: Find candidates who know someone at Company X, who have Skill Y, within 2 degrees
+Pattern matching: Identify career paths that consistently lead to senior engineering roles
+Real-time recommendation graphs: Cypher queries replace complex JOIN chains
+Fraud detection: Spot fake endorsements via circular reference detection
+
+3. Product Vision & Goals
+
+3.1 Success Metrics
+
+4. Neo4j Data Model
+4.1 Node Types (Entities)
+The following nodes form the core graph schema. All IDs are UUIDs stored as node properties.
+
+
+4.2 Relationship Types
+Relationships are directional and carry properties — this is where Neo4j's power truly shows.
+
+
+5. Core Feature Specifications
+5.1 Candidate Profile Engine
+Every candidate is represented as a rich graph node with relationships to skills, experiences, education, endorsements, and connections. This enables powerful profile traversal.
+
+
+5.2 Job Posting & Management
+
+5.3 Intelligent Matching Engine
+WorkVerse's matching engine is its core differentiator — powered entirely by Cypher graph queries.
+
+
+5.4 Smart Recommendation System
+
+5.5 Experience & Skills Validation
+
+5.6 Analytics & Insights Dashboard
+
+5.7 Employer Features
+
+6. Neo4j Implementation Guide
+6.1 Database Setup
+Use Neo4j AuraDB (cloud-managed) for production or Neo4j Desktop for local development
+Enable APOC plugin for advanced graph algorithms (shortest path, community detection, centrality)
+Enable Graph Data Science (GDS) library for ML-powered recommendations
+Set up read replicas for analytics queries to avoid impacting production OLTP workload
+
+6.2 Indexes & Constraints
+
+6.3 Core Cypher Queries
+Find Top Matching Candidates for a Job
+
+Skill Gap Analysis for a Candidate
+
+Referral Path Discovery
+
+Trending Skills This Month
+
+6.4 Graph Data Science — Recommendations
+Use the GDS library for advanced recommendation algorithms that go beyond simple Cypher:
+
+Node2Vec Embeddings: Generate vector embeddings of Candidate and Job nodes based on graph structure. Use cosine similarity for 'candidates like this candidate' recommendations.
+PageRank on Endorsements: Rank candidates by the influence of their endorsers — an endorsement from a Principal Engineer carries more weight than one from a recent grad.
+Community Detection (Louvain): Identify natural talent clusters (e.g., 'ML Engineers who also do MLOps') to power skill-cluster browsing.
+Shortest Path for Referrals: Use Dijkstra / BFS to find the fastest referral path between a candidate and a company.
+
+6.5 API Design Principles
+Backend services communicate with Neo4j via the official Neo4j Driver (JavaScript / Python). All queries are parameterised to prevent injection.
+
+REST + GraphQL: Expose a GraphQL layer on top of Neo4j for flexible querying from the frontend
+Cypher as Service: Wrap each query type in a named service function (e.g., getMatchingCandidates, getSkillGap)
+Caching: Cache top-match results in Redis for 5 minutes; invalidate on profile/job updates
+Pagination: Use Neo4j SKIP/LIMIT with keyset pagination on postedAt for infinite scroll
+Rate Limiting: Graph traversal queries are expensive — rate-limit unauthenticated calls to 20/min
+
+7. Vibe Coding Guidelines
+
+7.1 Recommended Tech Stack
+
+7.2 Vibe Coding Sprint Phases
+Set up Neo4j, run constraint/index creation scripts, seed 50 candidate + 20 job nodes with fake data using Faker.js: Phase 1 — Graph Schema
+Build REST endpoints for candidate CRUD, job CRUD, and skill management. Wire up to Neo4j driver.: Phase 2 — Core APIs
+Implement the Cypher matching queries as API endpoints. Build a simple scoring function.: Phase 3 — Matching Engine
+React app with candidate profile page, job listing page, and basic search.: Phase 4 — Frontend MVP
+Add skill gap analysis, referral paths, and the recommendation engine using GDS.: Phase 5 — Smart Features
+Build the employer dashboard with pipeline Kanban, skill demand heatmap, and talent pool.: Phase 6 — Analytics
+Add interactive graph view of a candidate's network using React-Force-Graph.: Phase 7 — Graph Visualisation
+
+7.3 Useful AI Prompts for Vibe Coding
+Use these prompts when building with AI assistants (like Claude):
+
+
+
+
+
+8. Security & Compliance
+8.1 Data Security
+All PII (email, phone, location) stored encrypted at rest in Neo4j using property-level encryption
+Candidate profiles are private by default — visibility controlled by isPublic and visibleToCompanies flags on Candidate node
+All Cypher queries use parameterised inputs — no string interpolation
+Role-based access control: Candidate, Employer, Admin roles with different graph read/write permissions
+
+8.2 Privacy & GDPR
+Right to erasure: DETACH DELETE candidate node removes all relationships atomically
+Data portability: Export candidate graph as JSON using APOC export procedures
+Consent management: consentGiven and consentDate properties on Candidate node
+Anonymisation: Analytics queries strip PII using graph projections
+
+9. Product Roadmap
+
+10. Appendix — Quick Reference
+10.1 Environment Variables
+
+10.2 Useful APOC Procedures
+apoc.export.json.all — Export entire graph as JSON for backup/migration
+apoc.periodic.iterate — Batch-process large skill import CSVs
+apoc.path.subgraphNodes — Get all nodes within N hops for network visualisation
+apoc.algo.pageRankWithConfig — Run PageRank on endorsement graph
+apoc.create.uuid — Generate UUIDs server-side for new nodes
+
+10.3 Key Design Decisions
+Skills are shared nodes to prevent 'React', 'ReactJS', 'React.js' fragmentation. Use a seeded skill taxonomy on launch.: Skill normalisation
+WorkVerse is graph-native. No PostgreSQL mirror. All reads and writes go through Neo4j.: No SQL fallback
+Nodes are never hard-deleted in production; use a deletedAt property and filter in queries. This preserves referral/history integrity.: Soft deletes
+Stored on Assessment nodes (not on HAS_SKILL relationships) to allow re-testing without destroying history.: Assessment scores
+
+
+WorkVerse PRD v1.0 — Confidential — Built for Vibe Coding with Neo4j
