@@ -21,7 +21,7 @@ const FEATURES = [
     desc: 'See mandatory skills, nearby capabilities, and the exact gap between current experience and target roles.',
   },
   {
-    title: 'Momentum for employers in work force',
+    title: 'Momentum for employers ',
     desc: 'Track openings, spotlight your brand, and turn every job post into a richer, more discoverable talent node.',
   },
 ];

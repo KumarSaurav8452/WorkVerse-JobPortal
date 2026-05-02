@@ -1,9 +1,11 @@
 const neo4j = require('neo4j-driver');
 require('dotenv').config();
 
+const neo4jUser = process.env.NEO4J_USER || process.env.NEO4J_USERNAME;
+
 const driver = neo4j.driver(
   process.env.NEO4J_URI,
-  neo4j.auth.basic(process.env.NEO4J_USER, process.env.NEO4J_PASSWORD),
+  neo4j.auth.basic(neo4jUser, process.env.NEO4J_PASSWORD),
   {
     maxConnectionPoolSize: 50,
     connectionTimeout: 30000,
