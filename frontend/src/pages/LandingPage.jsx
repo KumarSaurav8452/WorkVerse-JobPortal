@@ -21,7 +21,7 @@ const FEATURES = [
     desc: 'See mandatory skills, nearby capabilities, and the exact gap between current experience and target roles.',
   },
   {
-    title: 'Momentum for employers',
+    title: 'Momentum for employers in work force',
     desc: 'Track openings, spotlight your brand, and turn every job post into a richer, more discoverable talent node.',
   },
 ];
@@ -33,10 +33,10 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/jobs?limit=6').then((r) => setJobs(r.data.jobs || [])).catch(() => {});
+    api.get('/jobs?limit=6').then((r) => setJobs(r.data.jobs || [])).catch(() => { });
     api.get('/skills/trending').then((r) => {
       if (r.data?.length) setTrending(r.data.map((s) => s.skill));
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const handleSearch = (e) => {
