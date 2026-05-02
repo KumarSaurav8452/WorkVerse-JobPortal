@@ -93,6 +93,16 @@ router.post('/register', async (req, res) => {
     const id = uuidv4();
     const cleanEmail = email.toLowerCase().trim();
 
+    const existingUser = await session.run(
+      `MATCH (u)
+       WHERE (u:Candidate OR u:Employer) AND toLower(u.email) = $cleanEmail
+       RETURN u LIMIT 1`,
+      { cleanEmail }
+    );
+    if (existingUser.records.length) {
+      return res.status(409).json({ error: 'Email already registered. Please sign in instead.' });
+    }
+
     if (role === 'employer') {
       const companyId = uuidv4();
       const query = `
