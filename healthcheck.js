@@ -10,7 +10,7 @@ require(path.join(backendModules, 'dotenv')).config({ path: path.join(__dirname,
 const neo4j = require(path.join(backendModules, 'neo4j-driver'));
 
 const URI = process.env.NEO4J_URI;
-const USER = process.env.NEO4J_USER;
+const USER = process.env.NEO4J_USER || process.env.NEO4J_USERNAME;
 const PASS = process.env.NEO4J_PASSWORD;
 
 console.log('🔍 Healthcheck — Neo4j AuraDB');
