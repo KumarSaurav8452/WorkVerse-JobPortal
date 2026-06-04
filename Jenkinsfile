@@ -33,6 +33,15 @@ pipeline {
                 JWT_SECRET     = credentials('JWT_SECRET')
             }
             steps {
+                echo 'Writing .env for docker-compose...'
+                bat """
+                    echo NEO4J_URI=%NEO4J_URI%> .env
+                    echo NEO4J_USERNAME=%NEO4J_USERNAME%>> .env
+                    echo NEO4J_PASSWORD=%NEO4J_PASSWORD%>> .env
+                    echo NEO4J_DATABASE=neo4j>> .env
+                    echo JWT_SECRET=%JWT_SECRET%>> .env
+                    echo PORT=5000>> .env
+                """
                 echo 'Stopping and removing old containers...'
                 bat 'docker stop workverse-backend || true'
                 bat 'docker stop workverse-frontend || true'
@@ -40,6 +49,8 @@ pipeline {
                 bat 'docker rm workverse-frontend || true'
                 echo 'Starting fresh containers...'
                 bat 'docker-compose up -d'
+                echo 'Cleaning up .env...'
+                bat 'del .env'
                 echo 'WorkVerse is live at http://localhost'
             }
         }
