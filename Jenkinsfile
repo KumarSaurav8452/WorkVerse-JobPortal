@@ -21,14 +21,7 @@ pipeline {
         }
         stage('Build Docker Images') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'NEO4J_URI', variable: 'DB_URI'),
-                    string(credentialsId: 'NEO4J_USERNAME', variable: 'DB_USER'),
-                    string(credentialsId: 'NEO4J_PASSWORD', variable: 'DB_PASS'),
-                    string(credentialsId: 'JWT_SECRET', variable: 'JWT_SEC')
-                ]) {
-                    bat """docker build -t workverse-backend:latest --build-arg NEO4J_URI=${DB_URI} --build-arg NEO4J_USERNAME=${DB_USER} --build-arg NEO4J_PASSWORD=${DB_PASS} --build-arg JWT_SECRET=${JWT_SEC} ./backend"""
-                }
+                bat 'docker build -t workverse-backend:latest ./backend'
                 bat 'docker build -t workverse-frontend:latest ./frontend'
             }
         }
@@ -39,9 +32,21 @@ pipeline {
                 bat 'docker stop workverse-frontend || true'
                 bat 'docker rm workverse-backend || true'
                 bat 'docker rm workverse-frontend || true'
-                echo 'Starting containers...'
-                bat 'docker run -d --name workverse-backend --restart unless-stopped -p 5000:5000 workverse-backend:latest'
-                bat 'docker run -d --name workverse-frontend --restart unless-stopped -p 80:80 workverse-frontend:latest'
+                echo 'Writing environment config...'
+                withCredentials([
+                    string(credentialsId: 'NEO4J_URI', variable: 'DB_URI'),
+                    string(credentialsId: 'NEO4J_USERNAME', variable: 'DB_USER'),
+                    string(credentialsId: 'NEO4J_PASSWORD', variable: 'DB_PASS'),
+                    string(credentialsId: 'JWT_SECRET', variable: 'JWT_SEC')
+                ]) {
+                    writeFile file: '.env', text: """NEO4J_URI=${DB_URI}
+NEO4J_USERNAME=${DB_USER}
+NEO4J_PASSWORD=${DB_PASS}
+NEO4J_DATABASE=neo4j
+JWT_SECRET=${JWT_SEC}
+PORT=5000"""
+                    bat 'docker-compose up -d'
+                }
                 echo 'WorkVerse is live at http://localhost'
             }
         }
