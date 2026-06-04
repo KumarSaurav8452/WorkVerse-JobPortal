@@ -26,17 +26,23 @@ pipeline {
             }
         }
         stage('Deploy') {
+            environment {
+                NEO4J_URI      = credentials('NEO4J_URI')
+                NEO4J_USERNAME = credentials('NEO4J_USERNAME')
+                NEO4J_PASSWORD = credentials('NEO4J_PASSWORD')
+                JWT_SECRET     = credentials('JWT_SECRET')
+            }
             steps {
-        echo 'Stopping and removing old containers...'
-        bat 'docker stop workverse-backend || true'
-        bat 'docker stop workverse-frontend || true'
-        bat 'docker rm workverse-backend || true'
-        bat 'docker rm workverse-frontend || true'
-        echo 'Starting fresh containers...'
-        bat 'docker-compose up -d'
-        echo 'WorkVerse is live at http://localhost'
+                echo 'Stopping and removing old containers...'
+                bat 'docker stop workverse-backend || true'
+                bat 'docker stop workverse-frontend || true'
+                bat 'docker rm workverse-backend || true'
+                bat 'docker rm workverse-frontend || true'
+                echo 'Starting fresh containers...'
+                bat 'docker-compose up -d'
+                echo 'WorkVerse is live at http://localhost'
+            }
         }
-}
     }
     post {
         success { echo 'WorkVerse deployed at http://localhost' }
