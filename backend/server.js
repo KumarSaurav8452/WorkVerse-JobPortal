@@ -128,7 +128,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/matching', matchingRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok', db: 'neo4j-aura-dd7f574a', timestamp: new Date().toISOString() }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '2.0.0-auto-deploy', db: 'neo4j-aura-dd7f574a', timestamp: new Date().toISOString() }));
 
 // Error handler
 app.use((err, req, res, next) => {
