@@ -17,11 +17,11 @@ const FEATURES = [
     desc: 'Move beyond keyword search and discover candidates, roles, and paths that are adjacent to what you already know.',
   },
   {
-    title: 'Skill graph intelligence',
+    title: 'Skill graph intelligence ',
     desc: 'See mandatory skills, nearby capabilities, and the exact gap between current experience and target roles.',
   },
   {
-    title: 'Momentum for employers and job seekers',
+    title: 'Momentum for employers and job seekers and more',
     desc: 'Track openings, spotlight your brand, and turn every job post into a richer, more discoverable talent node.',
   },
 ];
