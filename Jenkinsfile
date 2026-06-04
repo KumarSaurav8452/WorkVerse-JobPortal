@@ -27,24 +27,26 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                echo 'Stopping and removing old containers...'
-                bat 'docker stop workverse-backend || true'
-                bat 'docker stop workverse-frontend || true'
-                bat 'docker rm workverse-backend || true'
-                bat 'docker rm workverse-frontend || true'
                 echo 'Creating environment file...'
-                bat '''
-                    (
-                        echo NEO4J_URI=neo4j+s://352f051d.databases.neo4j.io
-                        echo NEO4J_USERNAME=neo4j
-                        echo NEO4J_PASSWORD=DmEY06ibxvAIE9Wx2KLFB5VUJc5mW_Rw2ybnoJdSQhk
-                        echo NEO4J_DATABASE=neo4j
-                        echo JWT_SECRET=workverse-jwt-secret-2026
-                        echo PORT=5000
-                    ) > .env
-                '''
-                echo 'Starting containers...'
-                bat 'docker-compose up -d'
+                script {
+                    def envText = 'NEO4J_URI=neo4j+s://352f051d.databases.neo4j.io\n'
+                    envText += 'NEO4J_USER=neo4j\n'
+                    envText += 'NEO4J_USERNAME=neo4j\n'
+                    envText += 'NEO4J_PASSWORD=DmEY06ibxvAIE9Wx2KLFB5VUJc5mW_Rw2ybnoJdSQhk\n'
+                    envText += 'NEO4J_DATABASE=neo4j\n'
+                    envText += 'JWT_SECRET=workverse-jwt-secret-2026\n'
+                    envText += 'PORT=5000\n'
+                    writeFile file: 'deploy.env', text: envText
+                }
+                echo 'Stopping old containers...'
+                bat 'docker stop workverse-backend 2>nul & docker rm workverse-backend 2>nul & echo done'
+                bat 'docker stop workverse-frontend 2>nul & docker rm workverse-frontend 2>nul & echo done'
+                echo 'Starting backend...'
+                bat 'docker run -d --name workverse-backend --restart unless-stopped -p 5000:5000 --env-file deploy.env workverse-backend:latest'
+                echo 'Starting frontend...'
+                bat 'docker run -d --name workverse-frontend --restart unless-stopped -p 80:80 workverse-frontend:latest'
+                echo 'Verifying...'
+                bat 'ping -n 4 127.0.0.1 >nul & docker logs workverse-backend'
                 echo 'WorkVerse is live at http://localhost'
             }
         }
