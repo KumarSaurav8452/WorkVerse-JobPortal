@@ -26,22 +26,26 @@ pipeline {
             }
         }
         stage('Deploy') {
-            environment {
-                NEO4J_URI      = credentials('NEO4J_URI')
-                NEO4J_USERNAME = credentials('NEO4J_USERNAME')
-                NEO4J_PASSWORD = credentials('NEO4J_PASSWORD')
-                JWT_SECRET     = credentials('JWT_SECRET')
-            }
             steps {
                 echo 'Stopping and removing old containers...'
                 bat 'docker stop workverse-backend || true'
                 bat 'docker stop workverse-frontend || true'
                 bat 'docker rm workverse-backend || true'
                 bat 'docker rm workverse-frontend || true'
-                echo 'Starting backend container...'
-                bat """docker run -d --name workverse-backend --restart unless-stopped -p 5000:5000 -e NEO4J_URI=%NEO4J_URI% -e NEO4J_USER=%NEO4J_USERNAME% -e NEO4J_USERNAME=%NEO4J_USERNAME% -e NEO4J_PASSWORD=%NEO4J_PASSWORD% -e NEO4J_DATABASE=neo4j -e JWT_SECRET=%JWT_SECRET% -e PORT=5000 workverse-backend:latest"""
-                echo 'Starting frontend container...'
-                bat 'docker run -d --name workverse-frontend --restart unless-stopped -p 80:80 workverse-frontend:latest'
+                withCredentials([
+                    string(credentialsId: 'NEO4J_URI', variable: 'DB_URI'),
+                    string(credentialsId: 'NEO4J_USERNAME', variable: 'DB_USER'),
+                    string(credentialsId: 'NEO4J_PASSWORD', variable: 'DB_PASS'),
+                    string(credentialsId: 'JWT_SECRET', variable: 'JWT_SEC')
+                ]) {
+                    script {
+                        def envContent = "NEO4J_URI=${DB_URI}\nNEO4J_USERNAME=${DB_USER}\nNEO4J_PASSWORD=${DB_PASS}\nNEO4J_DATABASE=neo4j\nJWT_SECRET=${JWT_SEC}\nPORT=5000"
+                        writeFile file: '.env', text: envContent
+                    }
+                }
+                echo 'Starting fresh containers...'
+                bat 'docker-compose up -d'
+                bat 'del .env 2>nul || true'
                 echo 'WorkVerse is live at http://localhost'
             }
         }
